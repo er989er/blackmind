@@ -109,7 +109,7 @@ if not st.session_state.logged_in:
 # -------------------------------
 else:
     st.title("Black Mind")
-    st.subheader(f"Simple Mind Map Viewer (Dark Mode) - Logged in as {st.session_state.username}")
+    st.subheader(f"Logged in as {st.session_state.username}")
 
     if st.button("Logout"):
         logout()
