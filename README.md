@@ -71,3 +71,39 @@ Science -> Physics
 Science -> Chemistry
 History -> Ancient
 History -> Modern
+
+
+cool thing to play around with
+1 -> 2 -> 3 -> 4-> 5 -> 6 -> 7 -> 8 -> 1 
+1 -> 9
+2 -> 9
+3 -> 9
+4 -> 9
+5 -> 9
+6 -> 9
+7 -> 9
+8 -> 9
+a -> b -> c -> d -> e -> f -> g -> h -> a
+a -> 9
+b -> 9
+c -> 
+d -> 9
+e -> 9
+f -> 9
+g -> 9
+h -> 9
+1 -> a
+2 -> a
+2 -> b
+3 -> b
+3 -> c
+4 -> c
+4 -> d
+5 -> d
+5 -> e
+6 -> e
+6 -> f 
+7 -> f 
+7 -> h 
+8 -> h 
+8 -> a
