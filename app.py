@@ -2,6 +2,7 @@ import streamlit as st
 import networkx as nx
 from pyvis.network import Network
 import tempfile, os, json, hashlib, uuid
+import math
 
 st.set_page_config(page_title="Black Mind", layout="wide")
 
@@ -46,6 +47,10 @@ if "username" not in st.session_state:
     st.session_state.username = ""
 if "login_token" not in st.session_state:
     st.session_state.login_token = ""
+if "nodes_list" not in st.session_state:
+    st.session_state.nodes_list = []
+if "edges_list" not in st.session_state:
+    st.session_state.edges_list = []
 
 # Check token for remember me
 if not st.session_state.logged_in and st.session_state.login_token in tokens:
@@ -109,36 +114,45 @@ else:
     if st.button("Logout"):
         logout()
 
-    st.write("Type connections in the form `Parent -> Child -> Grandchild`, one per line.")
-
-    example_text = """Math -> Algebra
-Math -> Calculus
-Science -> Physics
-Science -> Chemistry
-History -> Ancient
-History -> Modern"""
-
-    notes = st.text_area("Connections:", example_text, height=200)
-
     user_layout_file = os.path.join(LAYOUTS_DIR, f"{st.session_state.username}.json")
     layout_positions = {}
     if os.path.exists(user_layout_file):
         with open(user_layout_file, "r") as f:
             layout_positions = json.load(f)
 
+    # -------------------------------
+    # Node creation
+    # -------------------------------
+    st.header("Add Nodes")
+    new_node = st.text_input("Node Name")
+    if st.button("Add Node"):
+        if new_node and new_node not in st.session_state.nodes_list:
+            st.session_state.nodes_list.append(new_node)
+            st.success(f"Node '{new_node}' added!")
+
+    st.header("Add Edges")
+    if st.session_state.nodes_list:
+        parent = st.selectbox("Parent Node", st.session_state.nodes_list, key="parent_select")
+        child = st.selectbox("Child Node", st.session_state.nodes_list, key="child_select")
+        if st.button("Add Edge"):
+            st.session_state.edges_list.append((parent, child))
+            st.success(f"Edge '{parent} -> {child}' added!")
+
+    # -------------------------------
+    # Generate Mind Map
+    # -------------------------------
     if st.button("Generate Mind Map"):
         G = nx.DiGraph()
-        lines = [line.strip() for line in notes.split("\n") if "->" in line]
 
-        # Multi-level connections
-        for line in lines:
-            parts = [x.strip() for x in line.split("->")]
-            for i in range(len(parts) - 1):
-                parent = parts[i]
-                child = parts[i + 1]
-                G.add_node(parent)
-                G.add_node(child)
-                G.add_edge(parent, child)
+        # Add nodes
+        for node in st.session_state.nodes_list:
+            G.add_node(node)
+
+        # Add edges
+        for parent, child in st.session_state.edges_list:
+            G.add_node(parent)
+            G.add_node(child)
+            G.add_edge(parent, child)
 
         net = Network(
             height="700px",
@@ -148,20 +162,24 @@ History -> Modern"""
             directed=True
         )
         net.from_nx(G)
+        net.toggle_physics(False)  # Fully draggable
 
-        # Fully draggable nodes
-        net.toggle_physics(False)
+        # Circular layout for clarity
+        num_nodes = len(net.nodes)
+        radius = 300
+        center_x, center_y = 0, 0
 
-        # Apply saved positions or default grid
         for i, node in enumerate(net.nodes):
             node["color"] = "#1f77b4"
             node["borderWidth"] = 2
             node["font"] = {"color": "white"}
+
             if node["id"] in layout_positions:
                 node["x"], node["y"] = layout_positions[node["id"]]
             else:
-                node["x"] = (i % 5) * 200
-                node["y"] = (i // 5) * 200
+                angle = 2 * math.pi * i / max(1, num_nodes)
+                node["x"] = center_x + radius * math.cos(angle)
+                node["y"] = center_y + radius * math.sin(angle)
 
         # Edge styling
         for edge in net.edges:
