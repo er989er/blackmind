@@ -1,0 +1,3 @@
+streamlit
+networkx
+pyvis
