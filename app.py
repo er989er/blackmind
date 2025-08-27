@@ -23,11 +23,17 @@ def save_json(data, file):
         json.dump(data, f)
 
 # -------------------------------
-# Load users and tokens
+# File paths
 # -------------------------------
 USERS_FILE = "users.json"
 TOKENS_FILE = "tokens.json"
+LAYOUTS_DIR = "layouts"
+if not os.path.exists(LAYOUTS_DIR):
+    os.makedirs(LAYOUTS_DIR)
 
+# -------------------------------
+# Load users and tokens
+# -------------------------------
 users = load_json(USERS_FILE)
 tokens = load_json(TOKENS_FILE)
 
@@ -114,11 +120,17 @@ History -> Modern"""
 
     notes = st.text_area("Connections:", example_text, height=200)
 
+    user_layout_file = os.path.join(LAYOUTS_DIR, f"{st.session_state.username}.json")
+    layout_positions = {}
+    if os.path.exists(user_layout_file):
+        with open(user_layout_file, "r") as f:
+            layout_positions = json.load(f)
+
     if st.button("Generate Mind Map"):
         G = nx.DiGraph()
         lines = [line.strip() for line in notes.split("\n") if "->" in line]
 
-        # Handle multi-level connections
+        # Multi-level connections
         for line in lines:
             parts = [x.strip() for x in line.split("->")]
             for i in range(len(parts) - 1):
@@ -137,17 +149,23 @@ History -> Modern"""
         )
         net.from_nx(G)
 
-        # Node styling
-        for node in net.nodes:
+        # Fully draggable nodes
+        net.toggle_physics(False)
+
+        # Apply saved positions or default grid
+        for i, node in enumerate(net.nodes):
             node["color"] = "#1f77b4"
             node["borderWidth"] = 2
             node["font"] = {"color": "white"}
+            if node["id"] in layout_positions:
+                node["x"], node["y"] = layout_positions[node["id"]]
+            else:
+                node["x"] = (i % 5) * 200
+                node["y"] = (i // 5) * 200
 
         # Edge styling
         for edge in net.edges:
             edge["color"] = "gray"
-
-        net.repulsion(node_distance=160, spring_length=160)
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=".html") as tmp_file:
             net.save_graph(tmp_file.name)
@@ -158,3 +176,12 @@ History -> Modern"""
             st.components.v1.html(html_code, height=750, scrolling=True)
 
         os.remove(tmp_path)
+
+    # -------------------------------
+    # Save layout button
+    # -------------------------------
+    if st.button("Save Layout"):
+        positions = {node["id"]: (node["x"], node["y"]) for node in net.nodes}
+        with open(user_layout_file, "w") as f:
+            json.dump(positions, f)
+        st.success("Layout saved successfully!")
