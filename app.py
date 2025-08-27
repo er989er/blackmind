@@ -121,6 +121,30 @@ else:
             layout_positions = json.load(f)
 
     # -------------------------------
+    # Bulk connection input
+    # -------------------------------
+    st.header("Bulk Connections (Optional)")
+    bulk_text = st.text_area(
+        "Enter connections like '1 -> 2 -> 3' (one per line)",
+        height=150
+    )
+
+    bulk_edges = []
+    if bulk_text:
+        lines = [line.strip() for line in bulk_text.split("\n") if "->" in line]
+        for line in lines:
+            parts = [x.strip() for x in line.split("->")]
+            for i in range(len(parts) - 1):
+                parent = parts[i]
+                child = parts[i + 1]
+                bulk_edges.append((parent, child))
+                # Automatically add nodes
+                if parent not in st.session_state.nodes_list:
+                    st.session_state.nodes_list.append(parent)
+                if child not in st.session_state.nodes_list:
+                    st.session_state.nodes_list.append(child)
+
+    # -------------------------------
     # Node creation
     # -------------------------------
     st.header("Add Nodes")
@@ -130,6 +154,9 @@ else:
             st.session_state.nodes_list.append(new_node)
             st.success(f"Node '{new_node}' added!")
 
+    # -------------------------------
+    # Edge creation
+    # -------------------------------
     st.header("Add Edges")
     if st.session_state.nodes_list:
         parent = st.selectbox("Parent Node", st.session_state.nodes_list, key="parent_select")
@@ -137,6 +164,20 @@ else:
         if st.button("Add Edge"):
             st.session_state.edges_list.append((parent, child))
             st.success(f"Edge '{parent} -> {child}' added!")
+
+    # -------------------------------
+    # Edge removal
+    # -------------------------------
+    st.header("Remove Edges")
+    if st.session_state.edges_list:
+        edge_options = [f"{p} -> {c}" for p, c in st.session_state.edges_list]
+        edge_to_remove = st.selectbox("Select Edge to Remove", edge_options)
+        if st.button("Remove Edge"):
+            parent, child = edge_to_remove.split(" -> ")
+            st.session_state.edges_list = [
+                (p, c) for p, c in st.session_state.edges_list if not (p == parent and c == child)
+            ]
+            st.success(f"Edge '{edge_to_remove}' removed!")
 
     # -------------------------------
     # Generate Mind Map
@@ -148,8 +189,14 @@ else:
         for node in st.session_state.nodes_list:
             G.add_node(node)
 
-        # Add edges
+        # Add edges from interactive panel
         for parent, child in st.session_state.edges_list:
+            G.add_node(parent)
+            G.add_node(child)
+            G.add_edge(parent, child)
+
+        # Add edges from bulk text
+        for parent, child in bulk_edges:
             G.add_node(parent)
             G.add_node(child)
             G.add_edge(parent, child)
