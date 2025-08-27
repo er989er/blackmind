@@ -107,3 +107,4 @@ h -> 9
 7 -> h 
 8 -> h 
 8 -> a
+the readme me is brokan so some enters and spaces that are in the editor ared in the offiacal vervion good luck
