@@ -103,7 +103,7 @@ else:
     if st.button("Logout"):
         logout()
 
-    st.write("Type connections in the form `Parent -> Child`, one per line.")
+    st.write("Type connections in the form `Parent -> Child -> Grandchild`, one per line.")
 
     example_text = """Math -> Algebra
 Math -> Calculus
@@ -117,11 +117,16 @@ History -> Modern"""
     if st.button("Generate Mind Map"):
         G = nx.DiGraph()
         lines = [line.strip() for line in notes.split("\n") if "->" in line]
+
+        # Handle multi-level connections
         for line in lines:
-            parent, child = [x.strip() for x in line.split("->")]
-            G.add_node(parent)
-            G.add_node(child)
-            G.add_edge(parent, child)
+            parts = [x.strip() for x in line.split("->")]
+            for i in range(len(parts) - 1):
+                parent = parts[i]
+                child = parts[i + 1]
+                G.add_node(parent)
+                G.add_node(child)
+                G.add_edge(parent, child)
 
         net = Network(
             height="700px",
@@ -132,11 +137,13 @@ History -> Modern"""
         )
         net.from_nx(G)
 
+        # Node styling
         for node in net.nodes:
             node["color"] = "#1f77b4"
             node["borderWidth"] = 2
             node["font"] = {"color": "white"}
 
+        # Edge styling
         for edge in net.edges:
             edge["color"] = "gray"
 
