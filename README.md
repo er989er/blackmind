@@ -1,7 +1,7 @@
 Black Mind – Mind Map Viewer
 
-runs on :
-https://github.com/er989er/blackmind/
+runs on:
+https://er989er.github.io/blackmind/
 
 Black Mind is a simple, dark-mode mind map viewer designed to help you visualize and organize ideas, notes, or concepts.
 
